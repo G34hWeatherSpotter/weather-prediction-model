@@ -3,19 +3,14 @@ import pandas as pd
 # Load data
 data = pd.read_csv('data/weather_data.csv')
 
-# Display the first few rows of the dataframe
-print(data.head())
+# Debug: Print column names to check
+print("Column Names:", data.columns)
 
 # Data preprocessing
-# Drop rows with missing values
-data = data.dropna()
-
-# Convert date columns to datetime if not already
 data['datetime'] = pd.to_datetime(data[['Year', 'Month', 'Day', 'Hour']])
 data = data.set_index('datetime')
-
-# Drop unnecessary columns
 data = data.drop(columns=['Year', 'Month', 'Day', 'Hour', 'AOD'])
 
-# Print the cleaned data
-print(data.head())
+# Save cleaned data for later scripts
+data.to_csv('data/cleaned_weather_data.csv')
+print("Preprocessing Complete!")
