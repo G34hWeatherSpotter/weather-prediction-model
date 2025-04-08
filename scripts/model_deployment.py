@@ -1,43 +1,29 @@
-import joblib
 import pandas as pd
-import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error
+import joblib
 
-# Load the model
-model = joblib.load('weather_model.pkl')
+# Load the dataset with engineered features
+data = pd.read_csv('data/featured_weather_data.csv', index_col='datetime', parse_dates=True)
 
-# Define a function to preprocess new data and make predictions
-def predict_weather(new_data):
-    # Preprocess new data
-    new_data['datetime'] = pd.to_datetime(new_data[['Year', 'Month', 'Day', 'Hour']])
-    new_data = new_data.set_index('datetime')
-    new_data = new_data.drop(columns=['Year', 'Month', 'Day', 'Hour', 'AOD'])
-    
-    # Feature Engineering
-    new_data['temp_rolling_mean'] = new_data['air_temp'].rolling(window=3).mean()
-    new_data['temp_diff'] = new_data['air_temp'].diff()
-    new_data = new_data.dropna()
-    
-    # Prepare features
-    X_new = new_data[['air_temp', 'windspeed', 'winddir', 'pressure', 'humidity', 'rainfall', 'fog', 'temp_rolling_mean', 'temp_diff']]
-    
-    # Make predictions
-    predictions = model.predict(X_new)
-    return predictions
+# Define features and target
+X = data[['air_temp', 'windspeed', 'winddir', 'pressure', 'humidity', 'rainfall', 'fog', 'temp_rolling_mean', 'temp_diff']]
+y = data['air_temp'].shift(-1).dropna()  # Shift target by 1 to predict next time step
+X = X[:-1]  # Align features with the target
 
-# Example usage
-new_data = pd.DataFrame({
-    'Year': [2025, 2025, 2025],
-    'Month': [4, 4, 4],
-    'Day': [8, 8, 8],
-    'Hour': [10, 11, 12],
-    'air_temp': [20.0, 21.0, 22.0],
-    'windspeed': [5.0, 5.0, 5.0],
-    'winddir': [180, 180, 180],
-    'pressure': [1010, 1011, 1012],
-    'humidity': [60, 61, 62],
-    'rainfall': [0, 0, 0],
-    'fog': [0, 0, 0]
-})
+# Split data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-predictions = predict_weather(new_data)
-print(predictions)
+# Train the model
+model = LinearRegression()
+model.fit(X_train, y_train)
+
+# Evaluate the model
+y_pred = model.predict(X_test)
+mse = mean_squared_error(y_test, y_pred)
+print(f'Mean Squared Error: {mse}')
+
+# Save the trained model
+joblib.dump(model, 'weather_model.pkl')
+print("Model training complete! The model has been saved as 'weather_model.pkl'")
