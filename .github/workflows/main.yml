@@ -1,8 +1,10 @@
-name: Model Training
+name: Weather Prediction Workflow
 
 on:
-  schedule:
-    - cron: '0 0 * * *' # Runs every day at midnight
+  push:
+    paths:
+      - "data/weather_data.csv"  # Run the workflow when this file changes
+  workflow_dispatch:  # Allow manual trigger from GitHub Actions tab
 
 jobs:
   train_model:
@@ -19,10 +21,25 @@ jobs:
 
     - name: Install dependencies
       run: |
-        pip install -r requirements.txt
+        python -m pip install --upgrade pip
+        pip install pandas numpy scikit-learn joblib matplotlib
 
-    - name: Run training script
+    - name: Run preprocessing script
       run: |
         python scripts/load_and_preprocess.py
+
+    - name: Run feature engineering script
+      run: |
         python scripts/feature_engineering.py
+
+    - name: Train model
+      run: |
         python scripts/model_training.py
+
+    - name: Save trained model
+      run: |
+        git config --global user.email "your-email@example.com"
+        git config --global user.name "your-github-username"
+        git add weather_model.pkl
+        git commit -m "Update trained weather model"
+        git push
