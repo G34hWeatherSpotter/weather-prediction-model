@@ -1,0 +1,28 @@
+name: Model Training
+
+on:
+  schedule:
+    - cron: '0 0 * * *' # Runs every day at midnight
+
+jobs:
+  train_model:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.8'
+
+    - name: Install dependencies
+      run: |
+        pip install -r requirements.txt
+
+    - name: Run training script
+      run: |
+        python scripts/load_and_preprocess.py
+        python scripts/feature_engineering.py
+        python scripts/model_training.py
